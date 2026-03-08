@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>✨ 花哨高中生 · 个人星际主页</title>
+  <!-- Font Awesome 6 (免费图标库，花哨必备) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* 全局reset & 字体 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+    }
+
+    /* 引入 Google 花哨圆体 */
+    @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap');
+
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      position: relative;
+      background: #0b0b1f;  /* 深色基底，防止闪烁 */
+      color: #f0f0ff;
+      font-weight: 400;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    /* ---------- 超花哨动态渐变伪背景 (极光色盘+色相旋转) ---------- */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 30% 40%, #ff99cc, #6600ff, #00ccff, #ffcc00, #ff3399);
+      background-size: 400% 400%;
+      background-position: 0% 0%;
+      filter: hue-rotate(0deg) blur(0px);
+      animation: bgHue 12s infinite linear, bgShift 18s infinite alternate ease-in-out;
+      z-index: -3;  /* 最底层，canvas在它上面 */
+      pointer-events: none;
+      opacity: 0.9; /* 稍微透出一点深邃感 */
+    }
+
+    /* 色相旋转动画 */
+    @keyframes bgHue {
+      0% { filter: hue-rotate(0deg) blur(0px); }
+      50% { filter: hue-rotate(180deg) blur(1px); }
+      100% { filter: hue-rotate(360deg) blur(0px); }
+    }
+
+    /* 背景位置游走，让渐变流动起来 */
+    @keyframes bgShift {
+      0% { background-position: 0% 0%; }
+      25% { background-position: 50% 30%; }
+      50% { background-position: 100% 70%; }
+      75% { background-position: 30% 80%; }
+      100% { background-position: 70% 20%; }
+    }
+
+    /* ---------- 粒子canvas (位于背景之上，内容之下) ---------- */
+    #particle-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      pointer-events: none;   /* 让鼠标可以穿透点击内容 */
+      z-index: -2;            /* 在伪背景上面，但在内容下面 */
+    }
+
+    /* ---------- 主内容卡片 (毛玻璃霓虹风) ---------- */
+    .content {
+      position: relative;
+      z-index: 10;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 3rem;
+      backdrop-filter: blur(8px) saturate(180%);
+      -webkit-backdrop-filter: blur(8px) saturate(180%);
+      background-color: rgba(8, 8, 25, 0.4);  /* 半透明深色，让背景透出来 */
+      border-radius: 0 0 60px 60px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(255, 100, 255, 0.3);
+      border: 1px solid rgba(255, 180, 255, 0.3);
+      border-top: none;
+    }
+
+    /* 头部区域 — 宇航员 + 名字 + 标语 */
+    .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 2rem 1rem 1.5rem;
+    }
+
+    .avatar {
+      font-size: 6rem;
+      filter: drop-shadow(0 0 25px cyan) drop-shadow(0 0 45px magenta);
+      animation: floatGlow 4s infinite alternate;
+      color: #fff9e6;
+      margin-bottom: 0.5rem;
+    }
+
+    @keyframes floatGlow {
+      0% { transform: translateY(0px); filter: drop-shadow(0 0 15px #ff66cc) drop-shadow(0 0 30px #3399ff); }
+      100% { transform: translateY(-10px); filter: drop-shadow(0 0 25px #ffaa00) drop-shadow(0 0 50px #ff44ee); }
+    }
+
+    h1 {
+      font-size: 3.5rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #ffe99c, #ffd0ff, #a0e9ff, #c0ffb0);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 20px #ff00c8, 0 0 40px #3700ff;
+      margin-bottom: 0.25rem;
+      font-family: 'Quicksand', sans-serif;
+    }
+
+    .glow-tagline {
+      font-size: 1.6rem;
+      font-weight: 600;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(5px);
+      padding: 0.5rem 2rem;
+      border-radius: 60px;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      box-shadow: 0 0 30px #ff66a3;
+      color: #fffbe3;
+      margin-top: 0.5rem;
+      display: inline-block;
+    }
+
+    .tagline-small {
+      font-size: 1.2rem;
+      color: #ffeca0;
+      text-shadow: 0 0 15px violet;
+      margin: 0.75rem 0 1.5rem;
+    }
+
+    /* 社交链接彩虹区 */
+    .social-links {
+      display: flex;
+      gap: 1.8rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 1.8rem 0 2.5rem;
+    }
+
+    .social-icon {
+      font-size: 2.2rem;
+      color: white;
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 15, 35, 0.6);
+      backdrop-filter: blur(8px);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 0 30px currentColor;
+      transition: 0.2s ease-in-out;
+      text-decoration: none;
+    }
+
+    .social-icon:nth-child(1) { color: #ff7b7b; box-shadow: 0 0 30px #ff3b3b; }
+    .social-icon:nth-child(2) { color: #7be07b; box-shadow: 0 0 30px #26e026; }
+    .social-icon:nth-child(3) { color: #7b9eff; box-shadow: 0 0 30px #3f7aff; }
+    .social-icon:nth-child(4) { color: #ffb86b; box-shadow: 0 0 30px #ff944d; }
+    .social-icon:nth-child(5) { color: #ff82ee; box-shadow: 0 0 30px #ff29e6; }
+
+    .social-icon:hover {
+      transform: scale(1.2) rotate(8deg);
+      border-color: white;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    /* 卡片网格—兴趣爱好/项目 */
+    .card-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.8rem;
+      justify-content: center;
+      margin: 3rem 0 2rem;
+    }
+
+    .card {
+      flex: 1 1 240px;
+      max-width: 280px;
+      background: rgba(18, 18, 45, 0.5);
+      backdrop-filter: blur(16px);
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      border-radius: 40px;
+      padding: 2rem 1.5rem;
+      text-align: center;
+      transition: 0.3s;
+      box-shadow: 0 20px 30px -10px black, 0 0 30px #ffb3ff;
+      color: #f5f5ff;
+    }
+
+    .card i {
+      font-size: 3.5rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(145deg, gold, #ffa3fd, #6ed4ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 0 15px #00f7ff);
+    }
+
+    .card h3 {
+      font-size: 2rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 0 10px cyan;
+    }
+
+    .card p {
+      font-size: 1rem;
+      opacity: 0.9;
+      background: rgba(0,0,0,0.3);
+      border-radius: 40px;
+      padding: 0.3rem;
+    }
+
+    .card:hover {
+      transform: translateY(-15px) scale(1.02);
+      border-color: #f0f;
+      box-shadow: 0 0 60px #ff44ee, 0 20px 40px black;
+    }
+
+    /* 座右铭区域 (闪亮) */
+    .quote-block {
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(20px);
+      border-radius: 80px;
+      padding: 2rem 2.5rem;
+      margin: 3rem 0 2rem;
+      border: 1px solid rgba(255, 200, 255, 0.7);
+      text-align: center;
+      box-shadow: 0 0 80px #ff80bf;
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #fffeca;
+      text-shadow: 0 0 20px magenta, 0 0 40px cyan;
+    }
+
+    .quote-block i {
+      color: gold;
+      margin: 0 1rem;
+      font-size: 2rem;
+    }
+
+    /* footer 小尾巴 */
+    .footer-note {
+      text-align: center;
+      margin-top: 3rem;
+      font-size: 1.1rem;
+      color: #ffd9b0;
+      text-shadow: 0 0 8px purple;
+      border-top: 2px dashed rgba(255,255,255,0.3);
+      padding-top: 1.8rem;
+    }
+
+    /* 响应式 */
+    @media (max-width: 600px) {
+      h1 { font-size: 2.5rem; }
+      .glow-tagline { font-size: 1.2rem; }
+      .avatar { font-size: 5rem; }
+      .card-grid { gap: 1rem; }
+      .quote-block { font-size: 1.3rem; padding: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 花哨粒子画布 (由JS控制) -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- 主内容区域 (所有文字卡片都在这里) -->
+  <div class="content">
+    <div class="hero">
+      <!-- 宇航员图标 + 霓虹名字 -->
+      <div class="avatar">
+        <i class="fas fa-user-astronaut"></i>
+      </div>
+      <h1>林 星 宇</h1>
+      <div class="glow-tagline">
+        <i class="fas fa-star"></i> 高中生·未来码星 <i class="fas fa-star"></i>
+      </div>
+      <div class="tagline-small">
+        <i class="fas fa-laptop-code"></i> 代码 ｜ 设计 ｜ 摄影 ｜ 白日梦
+      </div>
+    </div>
+
+    <!-- 五彩斑斓的社交链接 (悬浮更花哨) -->
+    <div class="social-links">
+      <a href="#" class="social-icon"><i class="fab fa-github"></i></a>
+      <a href="#" class="social-icon"><i class="fab fa-bilibili"></i></a>
+      <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+      <a href="#" class="social-icon"><i class="fab fa-xiaomi"></i></a> <!-- 占位图标，喜欢可换 -->
+      <a href="#" class="social-icon"><i class="fas fa-envelope"></i></a>
+    </div>
+
+    <!-- 卡片区：我的炫酷项目/爱好 -->
+    <div class="card-grid">
+      <div class="card">
+        <i class="fas fa-robot"></i>
+        <h3>AI 小探索</h3>
+        <p>训练了一个会写诗的机器人，偶尔画画。</p>
+      </div>
+      <div class="card">
+        <i class="fas fa-camera-retro"></i>
+        <h3>光斑摄影</h3>
+        <p>拍夜景、霓虹、赛博街道。滤镜狂魔。</p>
+      </div>
+      <div class="card">
+        <i class="fas fa-cube"></i>
+        <h3>3D 小玩意</h3>
+        <p>Blender 捏些奇奇怪怪的悬浮岛。</p>
+      </div>
+      <div class="card">
+        <i class="fas fa-gamepad"></i>
+        <h3>独立游戏</h3>
+        <p>正在用 Godot 做一款星空跳跃游戏。</p>
+      </div>
+    </div>
+
+    <!-- 闪闪发光座右铭 -->
+    <div class="quote-block">
+      <i class="fas fa-quote-left"></i>  保持好奇，持续闪耀  <i class="fas fa-quote-right"></i>
+    </div>
+
+    <!-- 简单自我介绍 -->
+    <div style="text-align: center; margin: 2rem 0 0; font-size: 1.2rem; background: rgba(255,255,255,0.05); border-radius: 60px; padding: 1rem 2rem;">
+      <p><i class="fas fa-map-pin" style="color: #ffaeff;"></i> 来自：星际市彩虹高中 · 二年级</p>
+      <p><i class="fas fa-music"></i> 最近循环：Porter Robinson / ヨルシカ</p>
+    </div>
+
+    <div class="footer-note">
+      ✦ 花哨主页 1.0 ✦ 欢迎交换友链 ✦ 持续施工中 ✦
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // ---------- 花哨粒子系统 + 鼠标排斥效果 ----------
+      const canvas = document.getElementById('particle-canvas');
+      const ctx = canvas.getContext('2d');
+
+      let width, height;
+      let particles = [];
+      const PARTICLE_COUNT = 140;       // 粒子数量多一点更花哨
+      let mouseX = null, mouseY = null; // 鼠标坐标 (用于排斥)
+      const MOUSE_RADIUS = 140;         // 影响半径
+      const REPEL_FORCE = 0.25;          // 排斥强度
+
+      // 随机颜色 (鲜艳高饱和)
+      function getRandomColor() {
+        const hue = Math.floor(Math.random() * 360);
+        return `hsla(${hue}, 85%, 70%, 0.85)`;
+      }
+
+      // 初始化粒子 (随机位置 & 速度)
+      function initParticles(w, h) {
+        particles = [];
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+          particles.push({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            vx: (Math.random() - 0.5) * 1.2,
+            vy: (Math.random() - 0.5) * 1.2,
+            r: Math.random() * 3 + 2.5,      // 半径 2.5~5.5
+            color: getRandomColor(),
+          });
+        }
+      }
+
+      // 调整画布尺寸 + 重置粒子 (保持比例)
+      function resizeCanvas() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        initParticles(width, height);
+      }
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();  // 首次调用
+
+      // 鼠标追踪 (pointer-events: none 所以监听document)
+      document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+
+      document.addEventListener('mouseleave', () => {
+        mouseX = null;
+        mouseY = null;
+      });
+
+      // 简单的触摸支持 (移动端取第一个触摸点)
+      document.addEventListener('touchmove', (e) => {
+        if (e.touches.length > 0) {
+          mouseX = e.touches[0].clientX;
+          mouseY = e.touches[0].clientY;
+        }
+      }, { passive: true });
+
+      document.addEventListener('touchend', () => {
+        mouseX = null;
+        mouseY = null;
+      });
+
+      // 更新粒子位置 (包含边界反弹 + 鼠标排斥)
+      function updateParticles() {
+        for (let i = 0; i < particles.length; i++) {
+          let p = particles[i];
+
+          // 鼠标排斥 (如果鼠标在画布内)
+          if (mouseX !== null && mouseY !== null) {
+            const dx = p.x - mouseX;
+            const dy = p.y - mouseY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < MOUSE_RADIUS && dist > 0.1) {
+              const force = (MOUSE_RADIUS - dist) / MOUSE_RADIUS; // 距离越近越强
+              const angle = Math.atan2(dy, dx);
+              const repelX = Math.cos(angle) * force * REPEL_FORCE;
+              const repelY = Math.sin(angle) * force * REPEL_FORCE;
+              p.vx += repelX;
+              p.vy += repelY;
+            }
+          }
+
+          // 移动
+          p.x += p.vx;
+          p.y += p.vy;
+
+          // 边界反弹 (并且防止卡边)
+          if (p.x < 0) { p.x = 0; p.vx *= -0.9; }
+          if (p.x > width) { p.x = width; p.vx *= -0.9; }
+          if (p.y < 0) { p.y = 0; p.vy *= -0.9; }
+          if (p.y > height) { p.y = height; p.vy *= -0.9; }
+
+          // 限制最大速度避免飞出银河
+          const maxSpeed = 2.5;
+          let sp = Math.hypot(p.vx, p.vy);
+          if (sp > maxSpeed) {
+            p.vx = (p.vx / sp) * maxSpeed;
+            p.vy = (p.vy / sp) * maxSpeed;
+          }
+
+          // 随机小抖动增加自然感 (极小随机加速度)
+          p.vx += (Math.random() - 0.5) * 0.05;
+          p.vy += (Math.random() - 0.5) * 0.05;
+        }
+      }
+
+      // 绘制粒子 + 连线 (超花哨网状)
+      function drawParticles() {
+        if (!ctx) return;
+        ctx.clearRect(0, 0, width, height);  // 完全透明，露出伪背景
+
+        // 1. 先画线条 (网状)
+        ctx.lineWidth = 1.2;
+        for (let i = 0; i < particles.length; i++) {
+          for (let j = i + 1; j < particles.length; j++) {
+            const p1 = particles[i];
+            const p2 = particles[j];
+            const dx = p1.x - p2.x;
+            const dy = p1.y - p2.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 130) {  // 连线阈值
+              // 根据距离调整透明度，越近越亮
+              const alpha = (1 - dist / 130) * 0.25; // 0~0.25 左右
+              ctx.beginPath();
+              ctx.moveTo(p1.x, p1.y);
+              ctx.lineTo(p2.x, p2.y);
+              ctx.strokeStyle = `rgba(255, 210, 255, ${alpha})`;  // 极淡粉紫线
+              ctx.stroke();
+            }
+          }
+        }
+
+        // 2. 再画粒子 (本身)
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          // 粒子填充使用其颜色 (半透明)
+          ctx.fillStyle = p.color;
+          ctx.shadowColor = '#ffaaff';
+          ctx.shadowBlur = 15;
+          ctx.fill();
+          // 增加一点高光小点
+          ctx.shadowBlur = 0; // 重置阴影画内部光晕
+          ctx.beginPath();
+          ctx.arc(p.x-1, p.y-1, p.r*0.3, 0, Math.PI*2);
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+          ctx.fill();
+        }
+        // 重置阴影
+        ctx.shadowBlur = 0;
+      }
+
+      // 动画循环
+      function animate() {
+        updateParticles();
+        drawParticles();
+        requestAnimationFrame(animate);
+      }
+      animate();
+
+      // 可选：当窗口隐藏时停止动画(可节省性能)，但无伤大雅
+    })();
+  </script>
+  <!-- 说明: 鼠标在屏幕上移动会排斥粒子，产生交互感；粒子网状结构+背景色环旋转，花哨度++ -->
+  <!-- 所有社交链接的href="#"，高中生可自行替换为真实链接 -->
+</body>
+</html>
